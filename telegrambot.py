@@ -112,17 +112,17 @@ def add_ticket(message):
     bot.register_next_step_handler(msg, add_active_ticket)
     ticket = message.text
 
-
+#@add_ticket
 def delete_active_ticket(message): pass
-    # if (message.text == 'да'):
-    #     print("да")
-    #     cursor.execute("delete from user_tickets where id_user="+str(message.chat.id)+" and id_ticket=")
-    #     connect.commit()
-    # else:
-    #     print("нет")
+       # if (message.text == 'да'):
+       #     print("да")
+       #     cursor.execute("delete from user_tickets where id_user="+str(message.chat.id)+" and id_ticket="+ticket)
+       #     connect.commit()
+       # else:
+       #     print("нет")
 
 
-def add_active_ticket(message):
+def add_active_ticket(message): pass
     # if (message.text == 'да'):
     #     print("да")
     #     cursor.execute("select id_ticket from all_tickets where active_row =" +row)
@@ -135,7 +135,7 @@ def add_active_ticket(message):
     # else:
     #     print("нет")
     # ticket = None
-    return True
+# return True
 
 
 @bot.message_handler(commands=['clear'])
