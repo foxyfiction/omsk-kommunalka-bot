@@ -10,7 +10,7 @@ connect = psycopg2.connect(database='d1eam1hffgoggg',
                            password='0lo2zjah68Y2pHef7jRrh9KjqO')
 cursor = connect.cursor()
 
-ticket = 'empty ticket'
+# ticket = 'empty ticket'
 
 bot = telebot.TeleBot(config.token)
 
@@ -51,7 +51,7 @@ def response_change_days(message):
     chat_id = message.chat.id
     if (message.text == 'да'):
         print("да")
-        msg = bot.send_message(message.chat.id, "Введите число:")
+        msg = bot.send_message(message.chat.id, "Введите число: ")
         bot.register_next_step_handler(msg, change_days)
     else:
         print("нет")
@@ -110,7 +110,7 @@ def add_ticket(message):
     markup.row('нет')
     msg = bot.send_message(message.chat.id, "Добавить квитанцию?", reply_markup=markup)
     bot.register_next_step_handler(msg, add_active_ticket)
-    ticket = message.text
+    # ticket = message.text
 
 
 def delete_active_ticket(message): pass
@@ -135,7 +135,7 @@ def add_active_ticket(message): pass
     # else:
     #     print("нет")
     # ticket = None
-# return True
+    # return True
 
 
 @bot.message_handler(commands=['clear'])
