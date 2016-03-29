@@ -112,7 +112,7 @@ def add_ticket(message):
     bot.register_next_step_handler(msg, add_active_ticket)
     ticket = message.text
 
-#@add_ticket
+
 def delete_active_ticket(message): pass
        # if (message.text == 'да'):
        #     print("да")
