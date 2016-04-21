@@ -39,9 +39,14 @@ if __name__ == '__main__':
             date = datetime.date.today()
             month = date.month
             year = date.year
-            day_of_date = datetime.date(year, month, int(finish_date))
-            day_of_date_before_month = datetime.date(year, month, int(finish_date))
-
+            try:
+                day_of_date = datetime.date(year, month, int(finish_date))
+            except ValueError:
+                day_of_date = datetime.date(year, month, int(finish_date)-2)
+            try:
+                day_of_date_before_month = datetime.date(year, month+1, int(finish_date))
+            except ValueError:
+                day_of_date_before_month = datetime.date(year, month+1, int(finish_date)-2)
             print(ticket_name, finish_date)
             # if (int(finish_date)-int(days) <= int(time.strftime("%d")) and
             # int(time.strftime("%d")) <= int(finish_date)):
