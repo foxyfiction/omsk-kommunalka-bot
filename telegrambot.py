@@ -188,8 +188,9 @@ def finish_day(ticket, message):
                                + str(id_ticket) + "," + str(message.text) + ")")
             connect.commit()
             bot.send_message(message.chat.id, "Квитанция " + ticket + " добавлена!")
+        else: bot.send_message(message.chat.id, "Число должно быть в пределах от 1 да 31!")
     else:
-        bot.send_message(message.chat.id, "Не обижай ботю, не вводи хрень вместо числа!")
+        bot.send_message(message.chat.id, "Не обижай ботю, введи число!")
 
 
 @bot.message_handler(commands=['clear'])
