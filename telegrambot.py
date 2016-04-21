@@ -11,14 +11,11 @@ connect = psycopg2.connect(database='d1eam1hffgoggg',
                            password='0lo2zjah68Y2pHef7jRrh9KjqO')
 cursor = connect.cursor()
 
-# ticket = 'empty ticket'
-
 bot = telebot.TeleBot(config.token)
 
 
 @bot.message_handler(commands=['start'])
 def show_start_message(message):
-    print(message.chat.id)
     user_is_not_alive = True
     cursor.execute("select id_user " \
                    "from users " \
