@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import telebot
-import config
 import psycopg2
+import telebot
 from telebot import types
+
+import config
 
 connect = psycopg2.connect(database='d1eam1hffgoggg',
                            user='ravnyccawkzsbx',
@@ -18,8 +19,15 @@ bot = telebot.TeleBot(config.token)
 @bot.message_handler(commands=['start'])
 def show_start_message(message):
     print(message.chat.id)
-    cursor.execute("insert into users (id_user, days) values (" + str(message.chat.id)+",5)")
-    connect.commit()
+    user_is_not_alive = True
+    cursor.execute("select id_user " \
+                   "from users " \
+                   "where id_user=" + str(message.chat.id))
+    for row in cursor:
+        user_is_not_alive = False
+    if (user_is_not_alive):
+        cursor.execute("insert into users (id_user, days) values (" + str(message.chat.id) + ",5)")
+        connect.commit()
     hello_message = "Добро пожаловать! \n " \
                     "/help - команды \n" \
                     "/list_all_tickets - доступные квитанции\n"
@@ -35,20 +43,22 @@ def show_start_message(message):
                    "/help - список всех команд "
     bot.send_message(message.chat.id, help_message)
 
+
 @bot.message_handler(commands=['days'])
 def show_start_message(message):
-    cursor.execute("select days from users where id_user="+ str(message.chat.id))
+    cursor.execute("select days from users where id_user=" + str(message.chat.id))
     for row in cursor:
         days = row[0]
-    days_message = "В течение "+str(days)+" дней будет приходить напоминание об оплате квитанции. "
+    days_message = "В течение " + str(days) + " дней будет приходить напоминание об оплате квитанции. "
     markup = types.ReplyKeyboardMarkup(row_width=1)
     markup.row('да')
     markup.row('нет')
-    msg = bot.send_message(message.chat.id, days_message+"Хотите изменить это число?", reply_markup=markup)
+    msg = bot.send_message(message.chat.id, days_message + "Хотите изменить это число?", reply_markup=markup)
     bot.register_next_step_handler(msg, response_change_days)
 
+
 def response_change_days(message):
-    chat_id = message.chat.id
+    # chat_id = message.chat.id
     if (message.text == 'да'):
         print("да")
         msg = bot.send_message(message.chat.id, "Введите число: ")
@@ -56,10 +66,12 @@ def response_change_days(message):
     else:
         print("нет")
 
+
 def change_days(message):
-    cursor.execute("Update users set days="+str(message.text)+" where id_user="+str(message.chat.id))
+    cursor.execute("Update users set days=" + str(message.text) + " where id_user=" + str(message.chat.id))
     connect.commit()
     bot.send_message(message.chat.id, "Число изменено.")
+
 
 @bot.message_handler(commands=['list_all_tickets'])
 def show_start_message(message):
@@ -69,6 +81,7 @@ def show_start_message(message):
         list_all_tickets_message = list_all_tickets_message + row[0].strip() + " " + row[1] + "\n"
     bot.send_message(message.chat.id, list_all_tickets_message)
 
+
 @bot.message_handler(commands=['list_tickets'])
 def show_start_message(message):
     cursor.execute("select all_tickets.ticket_name, " \
@@ -76,15 +89,16 @@ def show_start_message(message):
                    "from all_tickets " \
                    "left outer join user_tickets " \
                    "on user_tickets.id_ticket=all_tickets.id_ticket " \
-                   "where user_tickets.id_user="+str(message.chat.id))
+                   "where user_tickets.id_user=" + str(message.chat.id))
     list_tickets_message = ""
     for row in cursor:
         list_tickets_message = list_tickets_message + row[0].strip() + " " + row[1] + "\n"
     if list_tickets_message != "":
-        bot.send_message(message.chat.id, "Список ваших активных квитанций: \n"+ list_tickets_message)
+        bot.send_message(message.chat.id, "Список ваших активных квитанций: \n" + list_tickets_message)
     else:
-        bot.send_message(message.chat.id, "Вы еще не подключили ни одной квитанции."\
+        bot.send_message(message.chat.id, "Вы еще не подключили ни одной квитанции." \
                                           " Для того, что бы активировать квитанцию, перейдите в /list_all_tickets")
+
 
 @bot.message_handler(commands=['t_1', 't_2', 't_3', 't_4', 't_5', 't_6', 't_7', 't_8', 't_9', 't_10', 't_11'])
 def add_ticket(message):
@@ -93,54 +107,60 @@ def add_ticket(message):
                    "from user_tickets " \
                    "left outer join all_tickets " \
                    "on all_tickets.id_ticket=user_tickets.id_ticket " \
-                   "where user_tickets.id_user="+str(message.chat.id))
+                   "where user_tickets.id_user=" + str(message.chat.id))
     for row in cursor:
         print(row[0], str(message.chat.id), row[1], message.text)
         if ((str(row[0]) == str(message.chat.id)) and (str(row[1]).strip() == str(message.text))):
             print("я зашел в if")
             bot.send_message(message.chat.id, "Квитанция " + message.text + " у вас есть")
             markup = types.ReplyKeyboardMarkup(row_width=1)
-            markup.row('да')
-            markup.row('нет')
+            markup.row('Удалить ' + message.text)
+            markup.row('Нет ')
             msg = bot.send_message(message.chat.id, "Удалить квитанцию?", reply_markup=markup)
             bot.register_next_step_handler(msg, delete_active_ticket)
             return
+
     markup = types.ReplyKeyboardMarkup()
-    markup.row('да')
-    markup.row('нет')
+    markup.row('Добавить ' + message.text)
+    markup.row('Нет ')
     msg = bot.send_message(message.chat.id, "Добавить квитанцию?", reply_markup=markup)
     bot.register_next_step_handler(msg, add_active_ticket)
-    # ticket = message.text
 
 
-def delete_active_ticket(message): pass
-       # if (message.text == 'да'):
-       #     print("да")
-       #     cursor.execute("delete from user_tickets where id_user="+str(message.chat.id)+" and id_ticket="+ticket)
-       #     connect.commit()
-       # else:
-       #     print("нет")
+def delete_active_ticket(message):
+    answer, ticket = message.text.split()
+    if answer == "Нет":
+        return
+    if answer == "Удалить":
+        cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + ticket + "\'")
+        for new_row in cursor:
+            id_ticket = new_row[0]
+        cursor.execute("delete from user_tickets where id_user="+str(message.chat.id)+" and id_ticket="+str(id_ticket))
+        connect.commit()
+        bot.send_message(message.chat.id, "Квитанция " + ticket+" удалена!")
 
 
-def add_active_ticket(message): pass
-    # if (message.text == 'да'):
-    #     print("да")
-    #     cursor.execute("select id_ticket from all_tickets where active_row =" +row)
-    #     for new_row in cursor:
-    #         id_ticket = new_row[0]
-    #     cursor.execute("insert into all_tickets "
-    #                    "(id_user, id_ticket) "
-    #                    "values ("+ str(message.chat.id)+","
-    #                    + str(id_ticket).split() +")")
-    # else:
-    #     print("нет")
-    # ticket = None
-    # return True
+
+def add_active_ticket(message):
+    answer, ticket = message.text.split(' ')
+    if answer == "Нет":
+        return
+    if answer == "Добавить":
+        cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + ticket + "\'")
+        for new_row in cursor:
+            id_ticket = new_row[0]
+
+        cursor.execute("insert into user_tickets "
+                       "(id_user, id_ticket, finish_date) "
+                       "values (" + str(message.chat.id) + ","
+                       + str(id_ticket) + ","+str(10)+ ")")
+        connect.commit()
+        bot.send_message(message.chat.id, "Квитанция " + ticket+" добавлена!")
 
 
 @bot.message_handler(commands=['clear'])
 def show_start_message(message):
-    cursor.execute("delete from user_tickets where id_user="+str(message.chat.id))
+    cursor.execute("delete from user_tickets where id_user=" + str(message.chat.id))
     connect.commit()
     bot.send_message(message.chat.id, "Ваши активные квитанции удалены")
 
