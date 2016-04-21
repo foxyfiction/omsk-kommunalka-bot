@@ -61,9 +61,12 @@ def response_change_days(message):
 
 
 def change_days(message):
-    cursor.execute("Update users set days=" + str(message.text) + " where id_user=" + str(message.chat.id))
-    connect.commit()
-    bot.send_message(message.chat.id, "Число изменено.")
+    if (message.text.isdigit()):
+        cursor.execute("Update users set days=" + str(message.text) + " where id_user=" + str(message.chat.id))
+        connect.commit()
+        bot.send_message(message.chat.id, "Число изменено.")
+    else:
+        bot.send_message(message.chat.id, "Хей, чувачелло, ты не число ввел!")
 
 
 @bot.message_handler(commands=['list_all_tickets'])
@@ -171,15 +174,18 @@ def add_user_ticket_with_finish_data(message):
 
 
 def finish_day(ticket, message):
-    cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + ticket + "\'")
-    for new_row in cursor:
-        id_ticket = new_row[0]
-    cursor.execute("insert into user_tickets "
-                       "(id_user, id_ticket, finish_date) "
-                       "values (" + str(message.chat.id) + ","
-                       + str(id_ticket) + "," + str(message.text) + ")")
-    connect.commit()
-    bot.send_message(message.chat.id, "Квитанция " + ticket + " добавлена!")
+    if (message.text.isdigit()):
+        cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + ticket + "\'")
+        for new_row in cursor:
+            id_ticket = new_row[0]
+        cursor.execute("insert into user_tickets "
+                           "(id_user, id_ticket, finish_date) "
+                           "values (" + str(message.chat.id) + ","
+                           + str(id_ticket) + "," + str(message.text) + ")")
+        connect.commit()
+        bot.send_message(message.chat.id, "Квитанция " + ticket + " добавлена!")
+    else:
+        bot.send_message(message.chat.id, "Не обижай ботю, не вводи хрень вместо числа!")
 
 
 @bot.message_handler(commands=['clear'])
