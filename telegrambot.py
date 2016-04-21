@@ -62,11 +62,14 @@ def response_change_days(message):
 
 def change_days(message):
     if (message.text.isdigit()):
-        cursor.execute("Update users set days=" + str(message.text) + " where id_user=" + str(message.chat.id))
-        connect.commit()
-        bot.send_message(message.chat.id, "Число изменено.")
+        if (int(message.text) < 0 and int(message.text) > 25):
+            cursor.execute("Update users set days=" + str(message.text) + " where id_user=" + str(message.chat.id))
+            connect.commit()
+            bot.send_message(message.chat.id, "Число изменено.")
+        else:
+            bot.send_message(message.chat.id, "Days может быть в пределах от 0 до 25 :(")
     else:
-        bot.send_message(message.chat.id, "Хей, чувачелло, ты не число ввел!")
+        bot.send_message(message.chat.id, "Вы увечеры, что ввели число?")
 
 
 @bot.message_handler(commands=['list_all_tickets'])
