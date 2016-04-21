@@ -17,7 +17,7 @@ bot = telebot.TeleBot(config.token)
 if __name__ == '__main__':
     cursor.execute("select id_user,days from users")
     # for i in range(10):
-    #     bot.send_message(52228717, 'I Love you very much! Take you money!')
+    # bot.send_message(52228717, 'I Love you very much! Take you money!')
 
     for id_user_days in cursor:
         id_user = id_user_days[0]
@@ -42,11 +42,11 @@ if __name__ == '__main__':
             try:
                 day_of_date = datetime.date(year, month, int(finish_date))
             except ValueError:
-                day_of_date = datetime.date(year, month, int(finish_date)-2)
+                day_of_date = datetime.date(year, month, int(finish_date) - 2)
             try:
-                day_of_date_before_month = datetime.date(year, month+1, int(finish_date))
+                day_of_date_before_month = datetime.date(year, month + 1, int(finish_date))
             except ValueError:
-                day_of_date_before_month = datetime.date(year, month+1, int(finish_date)-2)
+                day_of_date_before_month = datetime.date(year, month + 1, int(finish_date) - 2)
             print(ticket_name, finish_date)
             # if (int(finish_date)-int(days) <= int(time.strftime("%d")) and
             # int(time.strftime("%d")) <= int(finish_date)):
@@ -55,8 +55,7 @@ if __name__ == '__main__':
                     bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"")
 
             if int(finish_date) > int(days):
-                if (day_of_date_before_month - datetime.timedelta(days=int(days) <= date)) and (
-                    date <= day_of_date_before_month):
+                if (day_of_date_before_month - datetime.timedelta(days=int(days)) <= date) and (
+                            date <= day_of_date_before_month):
                     bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"")
-
-                connect.close()
+    connect.close()

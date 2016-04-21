@@ -16,7 +16,6 @@ bot = telebot.TeleBot(config.token)
 
 @bot.message_handler(commands=['start'])
 def show_start_message(message):
-    print(message.chat.id)
     user_is_not_alive = True
     cursor.execute("select id_user " \
                    "from users " \
