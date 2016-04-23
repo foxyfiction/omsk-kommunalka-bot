@@ -86,14 +86,15 @@ def show_start_message(message):
 @bot.message_handler(commands=['active_bills'])
 def show_start_message(message):
     cursor.execute("select all_tickets.ticket_name, " \
-                   "all_tickets.active_row " \
+                   "all_tickets.active_row, " \
+                   "user_tickets.finish_date " \
                    "from all_tickets " \
                    "left outer join user_tickets " \
                    "on user_tickets.id_ticket=all_tickets.id_ticket " \
-                   "where user_tickets.id_user=" + str(message.chat.id))
+                   "where user_tickets.id_user="+ str(message.chat.id))
     active_bills_message = ""
     for row in cursor:
-        active_bills_message = active_bills_message + row[0].strip() + " " + row[1] + "\n"
+        active_bills_message = active_bills_message + row[0].strip() + " " + row[1].strip() + " оплатить до " + str(row[2]) +" числа"+"\n"
     if active_bills_message != "":
         bot.send_message(message.chat.id, "Список ваших активных квитанций: \n" + active_bills_message)
     else:
