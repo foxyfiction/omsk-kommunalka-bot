@@ -27,14 +27,14 @@ def show_start_message(message):
         connect.commit()
     hello_message = "Добро пожаловать! \n " \
                     "/help - команды \n" \
-                    "/list_all_tickets - доступные квитанции\n"
+                    "/bills_types - доступные квитанции\n"
     bot.send_message(message.chat.id, hello_message)
 
 
 @bot.message_handler(commands=['help'])
 def show_start_message(message):
-    help_message = "/list_all_tickets - показать список существующих квитанций \n" \
-                   "/list_tickets - просмотр активных квитанций \n" \
+    help_message = "/bills_types - показать список существующих квитанций \n" \
+                   "/active_bills - просмотр активных квитанций \n" \
                    "/days - установка числа - за сколько дней необходимо начать присылать напоминание \n" \
                    "/clear - удалить все активные квитанции\n" \
                    "/help - список всех команд "
@@ -72,16 +72,16 @@ def change_days(message):
         bot.send_message(message.chat.id, "Вы увечеры, что ввели число?")
 
 
-@bot.message_handler(commands=['list_all_tickets'])
+@bot.message_handler(commands=['bills_types'])
 def show_start_message(message):
     cursor.execute("SELECT ticket_name, active_row FROM all_tickets;")
-    list_all_tickets_message = ""
+    bills_types_message = ""
     for row in cursor:
-        list_all_tickets_message = list_all_tickets_message + row[0].strip() + " " + row[1] + "\n"
-    bot.send_message(message.chat.id, list_all_tickets_message)
+        bills_types_message = bills_types_message + row[0].strip() + " " + row[1] + "\n"
+    bot.send_message(message.chat.id, bills_types_message)
 
 
-@bot.message_handler(commands=['list_tickets'])
+@bot.message_handler(commands=['active_bills'])
 def show_start_message(message):
     cursor.execute("select all_tickets.ticket_name, " \
                    "all_tickets.active_row " \
@@ -89,14 +89,14 @@ def show_start_message(message):
                    "left outer join user_tickets " \
                    "on user_tickets.id_ticket=all_tickets.id_ticket " \
                    "where user_tickets.id_user=" + str(message.chat.id))
-    list_tickets_message = ""
+    active_bills_message = ""
     for row in cursor:
-        list_tickets_message = list_tickets_message + row[0].strip() + " " + row[1] + "\n"
-    if list_tickets_message != "":
-        bot.send_message(message.chat.id, "Список ваших активных квитанций: \n" + list_tickets_message)
+        active_bills_message = active_bills_message + row[0].strip() + " " + row[1] + "\n"
+    if active_bills_message != "":
+        bot.send_message(message.chat.id, "Список ваших активных квитанций: \n" + active_bills_message)
     else:
         bot.send_message(message.chat.id, "Вы еще не подключили ни одной квитанции." \
-                                          " Для того, что бы активировать квитанцию, перейдите в /list_all_tickets")
+                                          " Для того, что бы активировать квитанцию, перейдите в /bills_types")
 
 
 @bot.message_handler(commands=['t_1', 't_2', 't_3', 't_4', 't_5', 't_6', 't_7', 't_8', 't_9', 't_10', 't_11'])
@@ -113,73 +113,73 @@ def add_ticket(message):
             markup.row('Удалить ' + message.text)
             markup.row('Нет ')
             msg = bot.send_message(message.chat.id, "Удалить квитанцию?", reply_markup=markup)
-            bot.register_next_step_handler(msg, delete_active_ticket)
+            bot.register_next_step_handler(msg, delete_active_bill)
             return
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.row('Добавить ' + message.text)
     markup.row('Нет ')
     msg = bot.send_message(message.chat.id, "Добавить квитанцию?", reply_markup=markup)
-    bot.register_next_step_handler(msg, add_active_ticket)
+    bot.register_next_step_handler(msg, add_available_bill)
 
 
-def delete_active_ticket(message):
+def delete_active_bill(message):
     try:
-        answer, ticket = message.text.split()
+        answer, bill = message.text.split()
     except ValueError:
         return
     if answer == "Нет":
         return
     if answer == "Удалить":
-        cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + ticket + "\'")
+        cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + bill + "\'")
         for new_row in cursor:
-            id_ticket = new_row[0]
+            id_bill = new_row[0]
         cursor.execute(
-                "delete from user_tickets where id_user=" + str(message.chat.id) + " and id_ticket=" + str(id_ticket))
+                "delete from user_tickets where id_user=" + str(message.chat.id) + " and id_ticket=" + str(id_bill))
         connect.commit()
-        bot.send_message(message.chat.id, "Квитанция " + ticket + " удалена!")
+        bot.send_message(message.chat.id, "Квитанция " + bill + " удалена!")
 
 
-def add_active_ticket(message):
+def add_available_bill(message):
     try:
-        answer, ticket = message.text.split(' ')
+        answer, bill = message.text.split(' ')
     except ValueError:
         return
     if answer == "Нет":
         return
     if answer == "Добавить":
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.row('Да ' + ticket)
-        markup.row('Нет ' + ticket)
+        markup.row('Да ' + bill)
+        markup.row('Нет ' + bill)
         msg = bot.send_message(message.chat.id,
                                "По умолчанию до 10го числа каждого месяца будут приходит напоминания. Хотите изменить эту дату? ",
                                reply_markup=markup)
-        bot.register_next_step_handler(msg, add_user_ticket_with_finish_data)
+        bot.register_next_step_handler(msg, add_available_bill_with_finish_data)
 
 
-def add_user_ticket_with_finish_data(message):
+def add_available_bill_with_finish_data(message):
     try:
-        answer, ticket = message.text.split(' ')
+        answer, bill = message.text.split(' ')
     except ValueError:
         return
     if answer == "Нет":
-        cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + ticket + "\'")
+        cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + bill + "\'")
         for new_row in cursor:
-            id_ticket = new_row[0]
+            id_bill = new_row[0]
         cursor.execute("insert into user_tickets "
                        "(id_user, id_ticket, finish_date) "
                        "values (" + str(message.chat.id) + ","
-                       + str(id_ticket) + "," + str(10) + ")")
+                       + str(id_bill) + "," + str(10) + ")")
         connect.commit()
-        bot.send_message(message.chat.id, "Квитанция " + ticket + " добавлена!")
+        bot.send_message(message.chat.id, "Квитанция " + bill + " добавлена!")
     if answer == "Да":
         msg = bot.send_message(message.chat.id, "Введите число: ")
-        bot.register_next_step_handler(msg, lambda message: finish_day(ticket, message))
+        bot.register_next_step_handler(msg, lambda message: finish_day(bill, message))
 
 
-def finish_day(ticket, message):
+def finish_day(bill, message):
     if (message.text.isdigit()):
         if (int(message.text) >= 1 and int(message.text) <= 31):
-            cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + ticket + "\'")
+            cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + bill + "\'")
             for new_row in cursor:
                 id_ticket = new_row[0]
             cursor.execute("insert into user_tickets "
@@ -187,7 +187,7 @@ def finish_day(ticket, message):
                                "values (" + str(message.chat.id) + ","
                                + str(id_ticket) + "," + str(message.text) + ")")
             connect.commit()
-            bot.send_message(message.chat.id, "Квитанция " + ticket + " добавлена!")
+            bot.send_message(message.chat.id, "Квитанция " + bill + " добавлена!")
         else: bot.send_message(message.chat.id, "Число должно быть в пределах от 1 да 31!")
     else:
         bot.send_message(message.chat.id, "Не обижай ботю, в следующий раз введи число!")
