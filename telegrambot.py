@@ -190,7 +190,7 @@ def finish_day(ticket, message):
             bot.send_message(message.chat.id, "Квитанция " + ticket + " добавлена!")
         else: bot.send_message(message.chat.id, "Число должно быть в пределах от 1 да 31!")
     else:
-        bot.send_message(message.chat.id, "Не обижай ботю, введи число!")
+        bot.send_message(message.chat.id, "Не обижай ботю, в следующий раз введи число!")
 
 
 @bot.message_handler(commands=['clear'])
