@@ -48,14 +48,14 @@ def show_start_message(message):
         days = row[0]
     days_message = "В течении " + str(days) + " дней будет приходить напоминание об оплате квитанции. "
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.row('да')
-    markup.row('нет')
+    markup.row('Да')
+    markup.row('Нет')
     msg = bot.send_message(message.chat.id, days_message + "Хотите изменить это число?", reply_markup=markup)
     bot.register_next_step_handler(msg, response_change_days)
 
 
 def response_change_days(message):
-    if (message.text == 'да'):
+    if (message.text == 'Да'):
         msg = bot.send_message(message.chat.id, "Введите число: ")
         bot.register_next_step_handler(msg, change_days)
 
@@ -150,19 +150,16 @@ def add_available_bill(message):
         return
     if answer == "Добавить":
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.row('Да ' + bill)
-        markup.row('Нет ' + bill)
+        markup.row('Да')
+        markup.row('Нет')
         msg = bot.send_message(message.chat.id,
                                "По умолчанию до 10го числа каждого месяца будут приходить напоминания. Хотите изменить эту дату? ",
                                reply_markup=markup)
-        bot.register_next_step_handler(msg, add_available_bill_with_finish_data)
+        bot.register_next_step_handler(msg, lambda message:add_available_bill_with_finish_data(message, bill))
 
 
-def add_available_bill_with_finish_data(message):
-    try:
-        answer, bill = message.text.split(' ')
-    except ValueError:
-        return
+def add_available_bill_with_finish_data(message, bill):
+    answer = message.text
     if answer == "Нет":
         cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + bill + "\'")
         for new_row in cursor:
@@ -183,11 +180,11 @@ def finish_day(bill, message):
         if (int(message.text) >= 1 and int(message.text) <= 31):
             cursor.execute("select id_ticket from all_tickets where active_row =" + "\'" + bill + "\'")
             for new_row in cursor:
-                id_ticket = new_row[0]
+                id_bill = new_row[0]
             cursor.execute("insert into user_tickets "
                                "(id_user, id_ticket, finish_date) "
                                "values (" + str(message.chat.id) + ","
-                               + str(id_ticket) + "," + str(message.text) + ")")
+                               + str(id_bill) + "," + str(message.text) + ")")
             connect.commit()
             bot.send_message(message.chat.id, "Квитанция " + bill + " добавлена!")
             return
@@ -200,14 +197,14 @@ def finish_day(bill, message):
 @bot.message_handler(commands=['clear'])
 def show_start_message(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.row('да')
-    markup.row('нет')
+    markup.row('Да')
+    markup.row('Нет')
     msg = bot.send_message(message.chat.id, "Хотите удалить все активные квитанции?", reply_markup=markup)
     bot.register_next_step_handler(msg, clear)
 
 
 def clear(message):
-    if (message.text == 'да'):
+    if (message.text == 'Да'):
         cursor.execute("delete from user_tickets where id_user=" + str(message.chat.id))
         connect.commit()
         bot.send_message(message.chat.id, "Ваши активные квитанции удалены")
