@@ -48,14 +48,14 @@ def show_start_message(message):
         days = row[0]
     days_message = "В течении " + str(days) + " дней будет приходить напоминание об оплате квитанции. "
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.row('да')
-    markup.row('нет')
+    markup.row('Да')
+    markup.row('Нет')
     msg = bot.send_message(message.chat.id, days_message + "Хотите изменить это число?", reply_markup=markup)
     bot.register_next_step_handler(msg, response_change_days)
 
 
 def response_change_days(message):
-    if (message.text == 'да'):
+    if (message.text == 'Да'):
         msg = bot.send_message(message.chat.id, "Введите число: ")
         bot.register_next_step_handler(msg, change_days)
 
@@ -196,14 +196,14 @@ def finish_day(ticket, message):
 @bot.message_handler(commands=['clear'])
 def show_start_message(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.row('да')
-    markup.row('нет')
+    markup.row('Да')
+    markup.row('Нет')
     msg = bot.send_message(message.chat.id, "Хотите удалить все активные квитанции?", reply_markup=markup)
     bot.register_next_step_handler(msg, clear)
 
 
 def clear(message):
-    if (message.text == 'да'):
+    if (message.text == 'Да'):
         cursor.execute("delete from user_tickets where id_user=" + str(message.chat.id))
         connect.commit()
         bot.send_message(message.chat.id, "Ваши активные квитанции удалены")
