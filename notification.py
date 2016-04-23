@@ -61,4 +61,4 @@ if __name__ == '__main__':
                             date <= day_of_date_before_month):
                     bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"")
 
-    connect.close()
+connect.close()
