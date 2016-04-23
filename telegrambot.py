@@ -85,8 +85,8 @@ def show_start_message(message):
 
 @bot.message_handler(commands=['active_bills'])
 def show_start_message(message):
-    cursor.execute("select all_tickets.ticket_name, " \
-                   "all_tickets.active_row, " \
+    cursor.execute("select all_tickets.active_row, " \
+                   "all_tickets.ticket_name, " \
                    "user_tickets.finish_date " \
                    "from all_tickets " \
                    "left outer join user_tickets " \
