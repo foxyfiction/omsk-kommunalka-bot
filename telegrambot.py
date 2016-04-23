@@ -62,14 +62,16 @@ def response_change_days(message):
 
 def change_days(message):
     if (message.text.isdigit()):
-        if (int(message.text) < 0 and int(message.text) > 25):
+        if (int(message.text) > 0 and int(message.text) < 25):
             cursor.execute("Update users set days=" + str(message.text) + " where id_user=" + str(message.chat.id))
             connect.commit()
             bot.send_message(message.chat.id, "Число изменено.")
+            return
         else:
-            bot.send_message(message.chat.id, "Days может быть в пределах от 0 до 25 :(")
+            msg = bot.send_message(message.chat.id, "Days может быть в пределах от 0 до 25 :( \nВведите число: ")
     else:
-        bot.send_message(message.chat.id, "Вы уверены, что ввели число?")
+        msg = bot.send_message(message.chat.id, "Вы уверены, что ввели число? \nВведите число: ")
+    bot.register_next_step_handler(msg, change_days)
 
 
 @bot.message_handler(commands=['bills_types'])
@@ -188,9 +190,11 @@ def finish_day(bill, message):
                                + str(id_ticket) + "," + str(message.text) + ")")
             connect.commit()
             bot.send_message(message.chat.id, "Квитанция " + bill + " добавлена!")
-        else: bot.send_message(message.chat.id, "Число должно быть в пределах от 1 до 31!")
+            return
+        else: msg = bot.send_message(message.chat.id, "Число должно быть в пределах от 1 до 31!" + "\nВведите число: ")
     else:
-        bot.send_message(message.chat.id, "Не обижай ботю, в следующий раз введи число!")
+        msg = bot.send_message(message.chat.id, "Не обижай ботю, в следующий раз введи число!" + "\nВведите число: ")
+    bot.register_next_step_handler(msg, lambda message: finish_day(bill, message))
 
 
 @bot.message_handler(commands=['clear'])
