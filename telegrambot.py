@@ -46,7 +46,7 @@ def show_start_message(message):
     cursor.execute("select days from users where id_user=" + str(message.chat.id))
     for row in cursor:
         days = row[0]
-    days_message = "В течение " + str(days) + " дней будет приходить напоминание об оплате квитанции. "
+    days_message = "В течении " + str(days) + " дней будет приходить напоминание об оплате квитанции. "
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.row('да')
     markup.row('нет')
@@ -69,7 +69,7 @@ def change_days(message):
         else:
             bot.send_message(message.chat.id, "Days может быть в пределах от 0 до 25 :(")
     else:
-        bot.send_message(message.chat.id, "Вы увечеры, что ввели число?")
+        bot.send_message(message.chat.id, "Вы уверены, что ввели число?")
 
 
 @bot.message_handler(commands=['list_all_tickets'])
@@ -96,7 +96,7 @@ def show_start_message(message):
         bot.send_message(message.chat.id, "Список ваших активных квитанций: \n" + list_tickets_message)
     else:
         bot.send_message(message.chat.id, "Вы еще не подключили ни одной квитанции." \
-                                          " Для того, что бы активировать квитанцию, перейдите в /list_all_tickets")
+                                          " Для того, чтобы активировать квитанцию, перейдите в /list_all_tickets")
 
 
 @bot.message_handler(commands=['t_1', 't_2', 't_3', 't_4', 't_5', 't_6', 't_7', 't_8', 't_9', 't_10', 't_11'])
@@ -151,7 +151,7 @@ def add_active_ticket(message):
         markup.row('Да ' + ticket)
         markup.row('Нет ' + ticket)
         msg = bot.send_message(message.chat.id,
-                               "По умолчанию до 10го числа каждого месяца будут приходит напоминания. Хотите изменить эту дату? ",
+                               "По умолчанию до 10го числа каждого месяца будут приходить напоминания. Хотите изменить эту дату? ",
                                reply_markup=markup)
         bot.register_next_step_handler(msg, add_user_ticket_with_finish_data)
 
@@ -188,7 +188,7 @@ def finish_day(ticket, message):
                                + str(id_ticket) + "," + str(message.text) + ")")
             connect.commit()
             bot.send_message(message.chat.id, "Квитанция " + ticket + " добавлена!")
-        else: bot.send_message(message.chat.id, "Число должно быть в пределах от 1 да 31!")
+        else: bot.send_message(message.chat.id, "Число должно быть в пределах от 1 до 31!")
     else:
         bot.send_message(message.chat.id, "Не обижай ботю, в следующий раз введи число!")
 
