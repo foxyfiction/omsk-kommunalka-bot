@@ -234,13 +234,13 @@ def clear(message):
         connect.commit()
         bot.send_message(message.chat.id, "Ваши активные квитанции удалены")
 
-
+"""
 @bot.message_handler(commands=['graphics'])
 def send_graphics(message):
     graphic = open(meter_data_graphics.draw_meter_data_gas(message.chat.id), 'rb')
     bot.send_photo(message.chat.id, graphic)
     graphic.close()
-
+"""
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)
