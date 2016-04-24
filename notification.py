@@ -6,6 +6,22 @@ import telebot
 
 import config
 
+month_dict = {
+    1: 'января',
+    2: 'февраля',
+    3: 'марта',
+    4: 'апреля',
+    5: 'мая',
+    6: 'июня',
+    7: 'июля',
+    8: 'августа',
+    9: 'сентября',
+    10: 'бобобря',
+    11: 'ноября',
+    12: 'декабря'
+}
+
+
 connect = psycopg2.connect(database='d1eam1hffgoggg',
                            user='ravnyccawkzsbx',
                            host='ec2-54-235-246-67.compute-1.amazonaws.com',
@@ -65,12 +81,14 @@ if __name__ == '__main__':
 
             if int(today_day) <= int(optimal_date):
                 if (day_of_date - datetime.timedelta(days=int(days)) <= date) and (date <= day_of_date):
-                    bot.send_message(int(id_user), "Необходимо оплатить квитанции до "+ str(optimal_date) +"." + str(month))
+                    bot.send_message(int(id_user), "Необходимо оплатить квитанции до " +
+                                     str(optimal_date) + " " + month_dict[month])
 
             if int(today_day) > int(optimal_date):
                 if (day_of_date_before_month - datetime.timedelta(days=int(days)) <= date) and (
                             date <= day_of_date_before_month):
-                    bot.send_message(int(id_user), "Необходимо оплатить квитанции до "+ str(optimal_date)+"." + str(month+1))
+                    bot.send_message(int(id_user), "Необходимо оплатить квитанции до " +
+                                     str(optimal_date) + " " + month_dict[month+1])
 
 
 
@@ -96,11 +114,13 @@ if __name__ == '__main__':
 
                 if int(today_day) <= int(finish_date):
                     if (day_of_date - datetime.timedelta(days=int(days)) <= date) and (date <= day_of_date):
-                        bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"")
+                        bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"" +
+                                         " до " + str(finish_date) + " " + month_dict[month])
 
                 if int(today_day) > int(finish_date):
                     if (day_of_date_before_month - datetime.timedelta(days=int(days)) <= date) and (
                                 date <= day_of_date_before_month):
-                        bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"")
+                        bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"" +
+                                         " до " + str(finish_date) + " " + month_dict[month + 1])
 
 connect.close()
