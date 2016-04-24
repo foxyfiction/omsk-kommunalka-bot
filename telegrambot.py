@@ -37,6 +37,7 @@ def show_start_message(message):
     hello_message = "Добро пожаловать!\n" \
                     "/help - команды\n" \
                     "/bills_types - доступные квитанции\n" \
+                    "/md_types - квитанции, по которым можно передать показания\n" \
                     "/clever_notification - умные уведомления"
     bot.send_message(message.chat.id, hello_message)
 
@@ -44,8 +45,10 @@ def show_start_message(message):
 # Send list of all commands with descriptions
 @bot.message_handler(commands=['help'])
 def show_start_message(message):
-    help_message = "/bills_types - показать список существующих квитанций \n" \
+    help_message = "/bills_types - показать список квитанций \n" \
                    "/active_bills - просмотр активных квитанций \n" \
+                   "/md_types - квитанции, по которым можно передать показания\n" \
+                   "/active_md - список подключенных напоминаний о передаче показаний\n" \
                    "/days - установка числа - за сколько дней необходимо начать присылать напоминание \n" \
                    "/clear - удалить все активные квитанции\n" \
                    "/clever_notification - умные уведомления\n" \
@@ -89,15 +92,19 @@ def change_days(message):
         msg = bot.send_message(message.chat.id, "Вы уверены, что ввели число? \nВведите число: ")
     bot.register_next_step_handler(msg, change_days)
 
+######################################################################################################################
 
 # Show all bill's types, which is available in database
 @bot.message_handler(commands=['bills_types'])
 def show_start_message(message):
+    bot.send_message(message.chat.id, "Список квитанций: \n")
     cursor.execute("SELECT ticket_name, active_row FROM all_tickets;")
     bills_types_message = ""
     for row in cursor:
         bills_types_message = bills_types_message + row[0].strip() + " " + row[1] + "\n"
     bot.send_message(message.chat.id, bills_types_message)
+
+
 
 
 # Show all active bills
@@ -219,7 +226,133 @@ def finish_day(bill, message):
         msg = bot.send_message(message.chat.id, "Не обижай ботю, в следующий раз введи число!" + "\nВведите число: ")
     bot.register_next_step_handler(msg, lambda message: finish_day(bill, message))
 
+#######################################################################################################################
 
+@bot.message_handler(commands=['md_types'])
+def show_start_message(message):
+    bot.send_message(message.chat.id, "Список квитанций, по которым могут приходить напоминания о передаче показаний:\n ")
+    cursor.execute("SELECT md_name, md_active_row FROM meter_data_types;")
+    md_types_message = ""
+    for row in cursor:
+        md_types_message = md_types_message + row[0].strip() + " " + row[1] + "\n"
+    bot.send_message(message.chat.id, md_types_message)
+
+@bot.message_handler(commands=['active_md'])
+def show_start_message(message):
+    cursor.execute("select md_active_row, "
+                   "md_name, "
+                   "finish_mdt_date "
+                   "from meter_data_types "
+                   "left outer join user_meter_data "
+                   "on meter_data_types.id_mdt = user_meter_data.id_mdt "
+                   "where user_meter_data.id_user = " + str(message.chat.id))
+    active_md_message = ""
+    for row in cursor:
+        active_md_message = active_md_message + row[0].strip() + " " + row[1].strip() + " передать показания до " + \
+                               str(row[2]) + " числа"+"\n"
+    if active_md_message != "":
+        bot.send_message(message.chat.id, "Cписок подключенных напоминаний о передаче показаний: \n" + active_md_message)
+    else:
+        bot.send_message(message.chat.id, "Вы еще не подключили ни одной квитанции." +
+                                          " Для того, чтобы активировать напоминание опередаче показаний, перейдите в /md_types")
+
+@bot.message_handler(commands=['md_1', 'md_2', 'md_3', 'md_4'])
+def add_ticket(message):
+    cursor.execute("select user_meter_data.id_user, meter_data_types.md_active_row " +
+                   "from user_meter_data " +
+                   "left outer join meter_data_types " +
+                   "on meter_data_types.id_mdt=user_meter_data.id_mdt " +
+                   "where user_meter_data.id_user=" + str(message.chat.id))
+    for row in cursor:
+        if (str(row[0]) == str(message.chat.id)) and (str(row[1]).strip() == str(message.text)):
+            bot.send_message(message.chat.id, "Квитанция " + message.text + " у вас есть")
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.row('Удалить ' + message.text)
+            markup.row('Нет ')
+            msg = bot.send_message(message.chat.id, "Удалить квитанцию?", reply_markup=markup)
+            bot.register_next_step_handler(msg, delete_active_md)
+            return
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.row('Добавить ' + message.text)
+    markup.row('Нет ')
+    msg = bot.send_message(message.chat.id, "Добавить квитанцию?", reply_markup=markup)
+    bot.register_next_step_handler(msg, add_available_md)
+
+
+def delete_active_md(message):
+    try:
+        answer, md = message.text.split()
+    except ValueError:
+        return
+    if answer == "Нет":
+        return
+    if answer == "Удалить":
+        cursor.execute("select id_mdt from meter_data_types where md_active_row =" + "\'" + md + "\'")
+        id_mdt = None
+        for new_row in cursor:
+            id_mdt = new_row[0]
+        cursor.execute(
+                "delete from user_meter_data where id_user=" + str(message.chat.id) + " and id_mdt=" + str(id_mdt))
+        connect.commit()
+        bot.send_message(message.chat.id, "Квитанция " + md + " удалена!")
+
+
+def add_available_md(message):
+    try:
+        answer, md = message.text.split(' ')
+    except ValueError:
+        return
+    if answer == "Нет":
+        return
+    if answer == "Добавить":
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.row('Да')
+        markup.row('Нет')
+        msg = bot.send_message(message.chat.id,
+                               "По умолчанию до 23го числа каждого месяца будут приходить напоминания.\n" +
+                               "Хотите изменить эту дату?",
+                               reply_markup=markup)
+        bot.register_next_step_handler(msg, lambda message: add_available_bill_with_finish_data_md(message, md))
+
+
+def add_available_bill_with_finish_data_md(message, md):
+    answer = message.text
+    if answer == "Нет":
+        cursor.execute("select id_mdt from meter_data_types where md_active_row =" + "\'" + md + "\'")
+        id_mdt = None
+        for new_row in cursor:
+            id_mdt = new_row[0]
+        cursor.execute("insert into user_meter_data "
+                       "(id_user, id_mdt, finish_mdt_date) "
+                       "values (" + str(message.chat.id) + ","
+                       + str(id_mdt) + "," + str(23) + ")")
+        connect.commit()
+        bot.send_message(message.chat.id, "Квитанция " + md + " добавлена!")
+    if answer == "Да":
+        msg = bot.send_message(message.chat.id, "Введите число: ")
+        bot.register_next_step_handler(msg, lambda message: finish_mdt_day(md, message))
+
+
+def finish_mdt_day(md, message):
+    if message.text.isdigit():
+        if 1 <= int(message.text) <= 31:
+            cursor.execute("select id_mdt from meter_data_types where md_active_row =" + "\'" + md + "\'")
+            id_mdt = None
+            for new_row in cursor:
+                id_mdt = new_row[0]
+            cursor.execute("insert into user_meter_data "
+                       "(id_user, id_mdt, finish_mdt_date) "
+                       "values (" + str(message.chat.id) + ","
+                       + str(id_mdt) + "," + str(message.text) + ")")
+            connect.commit()
+            bot.send_message(message.chat.id, "Квитанция " + md + " добавлена!")
+            return
+        else: msg = bot.send_message(message.chat.id, "Число должно быть в пределах от 1 до 31!" + "\nВведите число: ")
+    else:
+        msg = bot.send_message(message.chat.id, "Не обижай ботю, в следующий раз введи число!" + "\nВведите число: ")
+    bot.register_next_step_handler(msg, lambda message: finish_mdt_day(md, message))
+
+    #########################################################################################################
 # Delete all user's active bills
 @bot.message_handler(commands=['clear'])
 def show_start_message(message):
@@ -235,6 +368,8 @@ def clear(message):
         cursor.execute("delete from user_tickets where id_user=" + str(message.chat.id))
         connect.commit()
         bot.send_message(message.chat.id, "Ваши активные квитанции удалены")
+
+###################################################################################################################
 
 @bot.message_handler(commands=['clever_notification'])
 def clever_notification(message):
