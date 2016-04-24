@@ -237,7 +237,7 @@ def clear(message):
 
 @bot.message_handler(commands=['graphics'])
 def send_graphics(message):
-    graphic = open(meter_data_graphics.draw_meter_data_gas(), 'rb')
+    graphic = open(meter_data_graphics.draw_meter_data_gas(message.chat.id), 'rb')
     bot.send_photo(message.chat.id, graphic)
     graphic.close()
 

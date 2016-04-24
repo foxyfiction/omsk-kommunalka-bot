@@ -9,7 +9,7 @@ import config
 
 
 # Method collect gas meter data from database
-def draw_meter_data_gas():
+def draw_meter_data_gas(id_user):
     """
     it will be there if the future:
     connect to database
@@ -31,14 +31,14 @@ def draw_meter_data_gas():
     while i:
         delta_meter_data.append(float(meter_data[i]) - float(meter_data[i - 1]))
         i -= 1
-    return draw_graphics(delta_meter_data)
+    return draw_graphics(delta_meter_data, id_user)
     # close cursor
 
 
-def draw_graphics(delta_meter_data):
+def draw_graphics(delta_meter_data, id_user):
     fig = plt.figure()   # Создание объекта Figure
     plt.plot(delta_meter_data)
-    name = '1'
+    name = id_user
     fmt = 'png'
     save(name, fmt)
     return '%s.%s' % (name, fmt)
