@@ -6,6 +6,9 @@ from telebot import types
 
 # imports: modules and configuration files
 import config
+import meter_reading_module
+import meter_data_graphics
+
 
 # connection to database on Heroku (Heroku Postgres)
 connect = psycopg2.connect(database='d1eam1hffgoggg',
@@ -230,6 +233,13 @@ def clear(message):
         cursor.execute("delete from user_tickets where id_user=" + str(message.chat.id))
         connect.commit()
         bot.send_message(message.chat.id, "Ваши активные квитанции удалены")
+
+
+@bot.message_handler(commands=['graphics'])
+def send_graphics(message):
+    graphic = open(meter_data_graphics.draw_meter_data_gas(), 'rb')
+    bot.send_photo(message.chat.id, graphic)
+    graphic.close()
 
 
 if __name__ == '__main__':

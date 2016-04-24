@@ -17,32 +17,35 @@ def draw_meter_data_gas():
     select from database and form list meter_data
     """
     # for experiments we use gas meter data
-    meter_data = ["112.31", "114.09", "115.76", "116.98"]
-    draw_graphics(meter_data)
+    meter_data = ["112.31",
+                  "114.09",
+                  "115.76",
+                  "116.98",
+                  "117.76",
+                  "118.88",
+                  "119.56",
+                  "120.45"]
+
+    delta_meter_data = []
+    i = len(meter_data) - 1
+    while i:
+        delta_meter_data.append(float(meter_data[i]) - float(meter_data[i - 1]))
+        i -= 1
+    return draw_graphics(delta_meter_data)
     # close cursor
-    pass
 
 
-def draw_graphics(meter_data):
-    for value in meter_data:
-        pass
+def draw_graphics(delta_meter_data):
     fig = plt.figure()   # Создание объекта Figure
-    print(fig.axes)   # Список текущих областей рисования пуст
-    print(type(fig))   # тип объекта Figure
-    plt.scatter(1.0, 1.0)   # scatter - метод для нанесения маркера в точке (1.0, 1.0)
-
-    # После нанесения графического элемента в виде маркера
-    # список текущих областей состоит из одной области
-    print(fig.axes)
-
-    plt.show()
+    plt.plot(delta_meter_data)
+    name = '1'
+    fmt = 'png'
+    save(name, fmt)
+    return '%s.%s' % (name, fmt)
 
 
 def save(name='', fmt='png'):
     pwd = os.getcwd()
-    os.chdir('./pictures/%s' % fmt)
     plt.savefig('%s.%s' % (name, fmt), fmt='png')
     os.chdir(pwd)
     #plt.close()
-
-draw_meter_data_gas()
