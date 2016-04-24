@@ -16,15 +16,10 @@ bot = telebot.TeleBot(config.token)
 
 if __name__ == '__main__':
     cursor.execute("select id_user,days from users")
-    # for i in range(10):
-    #     bot.send_message(52228717, 'I Love you very much! Take you money!')
 
     for id_user_days in cursor:
         id_user = id_user_days[0]
         days = id_user_days[1]
-        print(id_user)
-        print(days)
-        # bot.send_message(int(id_user), 'I Love you very much! Take you money!')
         cursor_ticket = connect.cursor()
         cursor_ticket.execute("select all_tickets.ticket_name," \
                               " user_tickets.finish_date " \
@@ -37,26 +32,33 @@ if __name__ == '__main__':
             finish_date = ticket_data[1]
 
             date = datetime.date.today()
+            today_day = date.day
             month = date.month
             year = date.year
+
             try:
                 day_of_date = datetime.date(year, month, int(finish_date))
             except ValueError:
-                day_of_date = datetime.date(year, month, int(finish_date)-2)
+                if (month == 2):
+                    day_of_date = datetime.date(year, month + 1, int(finish_date) - 3)
+                else:
+                    day_of_date = datetime.date(year, month, int(finish_date) - 1)
+
             try:
-                day_of_date_before_month = datetime.date(year, month+1, int(finish_date))
+                day_of_date_before_month = datetime.date(year, month + 1, int(finish_date))
             except ValueError:
-                day_of_date_before_month = datetime.date(year, month+1, int(finish_date)-2)
-            print(ticket_name, finish_date)
-            # if (int(finish_date)-int(days) <= int(time.strftime("%d")) and
-            # int(time.strftime("%d")) <= int(finish_date)):
-            if int(finish_date) <= int(days):
+                if (month == 2):
+                    day_of_date_before_month = datetime.date(year, month + 1, int(finish_date) - 3)
+                else:
+                    day_of_date_before_month = datetime.date(year, month + 1, int(finish_date) - 1)
+
+            if int(today_day) <= int(finish_date):
                 if (day_of_date - datetime.timedelta(days=int(days)) <= date) and (date <= day_of_date):
                     bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"")
 
-            if int(finish_date) > int(days):
-                if (day_of_date_before_month - datetime.timedelta(days=int(days) <= date)) and (
-                    date <= day_of_date_before_month):
+            if int(today_day) > int(finish_date):
+                if (day_of_date_before_month - datetime.timedelta(days=int(days)) <= date) and (
+                            date <= day_of_date_before_month):
                     bot.send_message(int(id_user), "Необходимо оплатить квитанцию \"" + ticket_name.strip() + "\"")
 
-                connect.close()
+connect.close()
