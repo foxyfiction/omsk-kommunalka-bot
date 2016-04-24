@@ -6,8 +6,8 @@ from telebot import types
 
 # imports: modules and configuration files
 import config
-import meter_reading_module
-import meter_data_graphics
+#import meter_reading_module
+#import meter_data_graphics
 
 
 # connection to database on Heroku (Heroku Postgres)
@@ -36,7 +36,8 @@ def show_start_message(message):
         connect.commit()
     hello_message = "Добро пожаловать!\n" \
                     "/help - команды\n" \
-                    "/bills_types - доступные квитанции\n"
+                    "/bills_types - доступные квитанции\n" \
+                    "/clever_notification - умные уведомления"
     bot.send_message(message.chat.id, hello_message)
 
 
@@ -47,6 +48,7 @@ def show_start_message(message):
                    "/active_bills - просмотр активных квитанций \n" \
                    "/days - установка числа - за сколько дней необходимо начать присылать напоминание \n" \
                    "/clear - удалить все активные квитанции\n" \
+                   "/clever_notification - умные уведомления\n" \
                    "/help - список всех команд "
     bot.send_message(message.chat.id, help_message)
 
@@ -233,6 +235,47 @@ def clear(message):
         cursor.execute("delete from user_tickets where id_user=" + str(message.chat.id))
         connect.commit()
         bot.send_message(message.chat.id, "Ваши активные квитанции удалены")
+
+@bot.message_handler(commands=['clever_notification'])
+def clever_notification(message):
+    cursor.execute("select id_user " +
+                   "from user_notification " +
+                   "where id_user=" + str(message.chat.id))
+    for row in cursor:
+        if (str(row[0]) == str(message.chat.id)):
+            bot.send_message(message.chat.id, "У вас подключена услуга - умные уведомления ")
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.row('Да')
+            markup.row('Нет')
+            msg = bot.send_message(message.chat.id, "Хотите отключить?", reply_markup=markup)
+            bot.register_next_step_handler(msg, delete_clever_notification)
+            return
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.row('Да')
+    markup.row('Нет')
+    msg = bot.send_message(message.chat.id, "Умное уведомление - это когда к вам приходит напоминания о ближайщей дате оплаты всех квитанций.  Хотите подлючить?", reply_markup=markup)
+    bot.register_next_step_handler(msg, add_clever_notification)
+
+def delete_clever_notification(message):
+    if message.text == "Нет":
+        return
+    if message.text == "Да":
+        cursor.execute(
+                "delete from user_notification where id_user=" + str(message.chat.id))
+        connect.commit()
+        bot.send_message(message.chat.id, "Услуга отключена")
+
+
+def add_clever_notification(message):
+    if message.text == "Нет":
+        return
+    if message.text == "Да":
+        cursor.execute("insert into user_notification " +
+                           "(id_user) " +
+                           "values (" + str(message.chat.id) +")")
+        connect.commit()
+        bot.send_message(message.chat.id, "Услуга подключена")
+
 
 """
 @bot.message_handler(commands=['graphics'])
