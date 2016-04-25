@@ -56,8 +56,8 @@ def show_start_message(message):
                    "/clever_notification - умные уведомления\n" \
                    "/send_meter_data - сбор показаний для статистики\n" \
                    "/graphics - график по статистике \n" \
-                   "/help - список всех команд\n "\
-                   "/description - описание работы бота"
+                   "/description - описание работы бота\n" \
+                   "/help - список всех команд\n "
     bot.send_message(message.chat.id, help_message)
 
 
@@ -627,7 +627,7 @@ def collect_meter_data(message, meter_data_type):
 
 def send_graphics(message, meter_data_type, periods, values):
     figure = plt.figure()
-    mpl.rcParams['font.fantasy'] = 'Arial', 'Times New Roman', 'Tahoma'
+    mpl.rcParams['font.fantasy'] = 'Nimbus Sans L', 'DejaVu Sans', 'DejaVuSerif'
     fig, ax = plt.subplots()
     # сбор показаний
     if len(values) < 2:
@@ -644,10 +644,10 @@ def send_graphics(message, meter_data_type, periods, values):
             delta_meter_data.append(float(values[i + 1]) - float(values[i]))
             i += 1
 
-    plt.title('График потребления ГАЗА по месяцам', {'fontname':'Tahoma'})
+    plt.title('График потребления ГАЗА по месяцам', {'fontname':'Nimbus Sans L'})
     plt.plot(periods, delta_meter_data, label='delta', color='red', linewidth=4.0)
-    plt.xlabel('Периоды', {'fontname':'Arial'}, color='blue',fontweight='bold', fontsize=16)
-    plt.ylabel('Потребление в месяц',  {'fontname':'Arial'}, color='green',fontweight='bold', fontsize=16)
+    plt.xlabel('Периоды', {'fontname':'DejaVuSerif'}, color='blue',fontweight='bold', fontsize=16)
+    plt.ylabel('Потребление в месяц',  {'fontname':'DejaVu Sans'}, color='green',fontweight='bold', fontsize=16)
     plt.legend()
     plt.tight_layout()
     fig.canvas.draw()
