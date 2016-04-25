@@ -54,13 +54,34 @@ def show_start_message(message):
                    "/clear_md - удалить все активные напоминания о передаче показаний \n" \
                    "/clever_notification - умные уведомления\n" \
                    "/send_meter_data - сбор показаний для статистики\n" \
-                   "/help - список всех команд "
+                   "/help - список всех команд\n "\
+                   "/description - описание работы бота"
     bot.send_message(message.chat.id, help_message)
 
 
 # Send 'days' and offer to enter new value
 # 'days' is a number, if finish date is 12 and days is 3, then bot will send notifications since 10 to 12 days of month
 # or since 9 to 11 ???????
+@bot.message_handler(commands=['description'])
+def show_start_message(message):
+    bot.send_message(message.chat.id, "Для того что бы квитанция добавилась "
+                                      "в список ваших активных напоминаний об "
+                                      "оплате перейдите в /bills_types и нажмите на "
+                                      "/t_n (где n- номер квитанции), при повторном"
+                                      " нажатии вы сможете удалить эту квитанцию из "
+                                      "активных. \n Для активации напоминаний о передаче "
+                                      "показаний перейдите в пункт /md_types и проделайте те же операции.\n"
+                                      "Все эти напоминания будут приходить несколько дней подряд до конечной "
+                                      "даты напоминания. Это количество дней можно изменить в пункте /days\n"
+                                      "Активные квитанции можно просмотреть в /active_bills /active_md\n"
+                                      "Удалить все активные квитанции вы можете в пунктах меню /clear и /clear_md\n"
+                                      "Так же вам могут приходить не куча напоминаний об оплате каждой квитанции,"
+                                      " а одно напоминание об оплате всех квитанций. Эту опцию возможно подключить в "
+                                      "/clever_notification\n"
+                                      "Для того, что бы мы могли составлять графики со статистикой потребления,"
+                                      " вам необходимо будет присылать свои показания в /send_meter_data\n"
+                                      "Для просмотра графика воспользуйтесь /graphics")
+
 @bot.message_handler(commands=['days'])
 def show_start_message(message):
     cursor.execute("select days from users where id_user=" + str(message.chat.id))
