@@ -3,6 +3,7 @@
 import psycopg2
 import telebot
 from telebot import types
+import datetime
 
 import matplotlib.pyplot as plt
 # imports: modules and configuration files
@@ -52,6 +53,7 @@ def show_start_message(message):
                    "/clear - удалить все активные напоминания об оплате квитанции\n" \
                    "/clear_md - удалить все активные напоминания о передаче показаний \n" \
                    "/clever_notification - умные уведомления\n" \
+                   "/send_meter_data - сбор показаний для статистики\n" \
                    "/help - список всех команд "
     bot.send_message(message.chat.id, help_message)
 
@@ -461,7 +463,95 @@ def add_clever_notification(message):
         bot.send_message(message.chat.id, "Услуга подключена")
 
 
+########################################################################################################################
+########################## ДОБАВЛЕНИЕ ПОКАЗАНИЙ ########################################################################
 
+@bot.message_handler(commands=['send_meter_data'])
+def begin_meter_data(message):
+    # вывод списка типов показаний по квитанциям
+    cursor.execute("SELECT md_name, md_active_row FROM meter_data_types;")
+    md_types_message = ""
+    meter_data_type_collection = []
+    for row in cursor:
+        md_types_message = md_types_message + row[0].strip() + " " + row[1] + '_' + "\n"
+        meter_data_type_collection.append(row[1])
+    msg = bot.send_message(message.chat.id, "По каким квитанциям вы хотите передать показания:\n " + md_types_message)
+    bot.register_next_step_handler(msg, lambda next_message: enter_meter_data(next_message, meter_data_type_collection))
+
+
+def enter_meter_data(message, meter_data_type_collection):
+    # спрашиваем показания
+    # проверка на правильный тип
+    meter_data_type = message.text
+    try:
+        meter_data_type_collection.index(meter_data_type[0:len(meter_data_type)-1])
+    except ValueError:
+        msg = bot.send_message(message.chat.id, "Что-то пошло не так... попробуйте снова /send_meter_data")
+        return
+    bot.send_message(message.chat.id, "Ок. Я запомнил. " + meter_data_type)
+    enter_meter_data_call(message, meter_data_type)
+
+
+def enter_meter_data_call(message, meter_data_type):
+    # передает показания в следующий хендлер
+    msg = bot.send_message(message.chat.id, "Введите показания "
+                                            "(если у вас несколько счетчиков, "
+                                            "то показания записываются через ПРОБЕЛ. "
+                                            "И заметьте, что вместо запятой в числах -- ТОЧКА!):\n ")
+    bot.register_next_step_handler(msg, lambda next_message: enter_meter_data_period(next_message, meter_data_type))
+
+
+def enter_meter_data_period(message, meter_data_type):
+    # спрашиваем период
+    meter_data = message.text
+    # проверка
+    for value in meter_data.split(' '):
+        try:
+            float(value)
+        except ValueError:
+            enter_meter_data_call(message, meter_data_type)
+            return
+    bot.send_message(message.chat.id, "Ок. Я запомнил. " + meter_data)
+    enter_meter_data_period_call(message, meter_data_type, meter_data)
+
+
+def enter_meter_data_period_call(message, meter_data_type, meter_data):
+    msg = bot.send_message(message.chat.id, "Введите период (формат ГГГГММ, например, 201402 - февраль 2014):\n ")
+    bot.register_next_step_handler(msg, lambda next_message: send_meter_data(next_message, meter_data_type, meter_data))
+
+
+def send_meter_data(message, meter_data_type, meter_data):
+    meter_data_period = message.text
+    year = meter_data_period[0:4]
+    month = meter_data_period[4:len(meter_data_period)]
+
+    cursor.execute("select id_mdt from meter_data_types where md_active_row =" + "\'" +
+                   meter_data_type[0:len(meter_data_type)-1] + "\'")
+    id_mdt = None
+    for new_row in cursor:
+        id_mdt = new_row[0]
+
+    try:
+        if not ((1 <= int(month) <= 12) and (2000 <= int(year) <= datetime.date.today().year)):
+            msg = bot.send_message(message.chat.id, "Ошибка в записи периода!\n ")
+            enter_meter_data_period_call(message, meter_data_type, meter_data)
+            return
+    except ValueError:
+        msg = bot.send_message(message.chat.id, "Ошибка в записи периода!\n ")
+        enter_meter_data_period_call(message, meter_data_type, meter_data)
+        return
+    cursor.execute('Insert into meter_data(id_user, id_mdt, date, value) values(' +
+                   str(message.chat.id) + ', ' +
+                   str(id_mdt) + ', ' +
+                   '\'' + year + '-' + month + '-01' + '\'' + ', ' +
+                   '\'' + meter_data + '\'' + ')'
+                   )
+    connect.commit()
+    bot.send_message(message.chat.id, "Ваши показания приняты\n ")
+
+
+########################################################################################################################
+#################################### ГРАФИКИ ПО ПОКАЗАНИЯМ #############################################################
 @bot.message_handler(commands=['graphics'])
 def send_graphics(message):
     fig = plt.figure()
@@ -475,14 +565,19 @@ def send_graphics(message):
                   "119.56",
                   "120.45"]
 
+
     delta_meter_data = []
     i = len(meter_data) - 1
     while i:
         delta_meter_data.append(float(meter_data[i]) - float(meter_data[i - 1]))
         i -= 1
 
+    plt.title('Simple fill_between')
+    plt.grid(True)
+    plt.plot(delta_meter_data, color='red', linewidth=4.0)
+    plt.xlabel('Periods', color='blue')
+    plt.ylabel('Use per day', color='green')
 
-    plt.plot(delta_meter_data)
     plt.savefig('%s.%s' % (str(message.chat.id), 'png'), fmt = 'png')
     graphic = open('%s.%s' % (str(message.chat.id), 'png'), 'rb')
     bot.send_photo(message.chat.id, graphic)
