@@ -4,10 +4,9 @@ import psycopg2
 import telebot
 from telebot import types
 
+import matplotlib.pyplot as plt
 # imports: modules and configuration files
 import config
-#import meter_reading_module
-#import meter_data_graphics
 
 
 # connection to database on Heroku (Heroku Postgres)
@@ -462,13 +461,34 @@ def add_clever_notification(message):
         bot.send_message(message.chat.id, "Услуга подключена")
 
 
-"""
+
 @bot.message_handler(commands=['graphics'])
 def send_graphics(message):
-    graphic = open(meter_data_graphics.draw_meter_data_gas(message.chat.id), 'rb')
+    fig = plt.figure()
+    # сбор показаний
+    meter_data = ["112.31",
+                  "114.09",
+                  "115.76",
+                  "116.98",
+                  "117.76",
+                  "118.88",
+                  "119.56",
+                  "120.45"]
+
+    delta_meter_data = []
+    i = len(meter_data) - 1
+    while i:
+        delta_meter_data.append(float(meter_data[i]) - float(meter_data[i - 1]))
+        i -= 1
+
+
+    plt.plot(delta_meter_data)
+    plt.savefig('%s.%s' % (str(message.chat.id), 'png'), fmt = 'png')
+    graphic = open('%s.%s' % (str(message.chat.id), 'png'), 'rb')
     bot.send_photo(message.chat.id, graphic)
     graphic.close()
-"""
+    plt.close()
+
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)
