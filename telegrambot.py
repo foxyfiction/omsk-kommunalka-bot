@@ -644,9 +644,9 @@ def send_graphics(message, meter_data_type, periods, values):
             delta_meter_data.append(float(values[i + 1]) - float(values[i]))
             i += 1
 
-    plt.title('График потребления ГАЗА по месяцам', {'fontname':'Nimbus Sans L'})
+    plt.title('График потребления ГАЗА по месяцам', {'fontname':'DejaVu Sans'})
     plt.plot(periods, delta_meter_data, label='delta', color='red', linewidth=4.0)
-    plt.xlabel('Периоды', {'fontname':'DejaVuSerif'}, color='blue',fontweight='bold', fontsize=16)
+    plt.xlabel('Периоды', {'fontname':'DejaVu Sans'}, color='blue',fontweight='bold', fontsize=16)
     plt.ylabel('Потребление в месяц',  {'fontname':'DejaVu Sans'}, color='green',fontweight='bold', fontsize=16)
     plt.legend()
     plt.tight_layout()
