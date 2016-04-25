@@ -5,6 +5,7 @@ import telebot
 from telebot import types
 import datetime
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 # imports: modules and configuration files
 import config
@@ -54,6 +55,7 @@ def show_start_message(message):
                    "/clear_md - удалить все активные напоминания о передаче показаний \n" \
                    "/clever_notification - умные уведомления\n" \
                    "/send_meter_data - сбор показаний для статистики\n" \
+                   "/graphics - график по статистике \n" \
                    "/help - список всех команд "
     bot.send_message(message.chat.id, help_message)
 
@@ -552,31 +554,86 @@ def send_meter_data(message, meter_data_type, meter_data):
 
 ########################################################################################################################
 #################################### ГРАФИКИ ПО ПОКАЗАНИЯМ #############################################################
+
+
 @bot.message_handler(commands=['graphics'])
-def send_graphics(message):
-    fig = plt.figure()
+def choice_meter_data_type(message):
+    # вывод списка типов показаний по квитанциям
+    cursor.execute("SELECT md_name, md_active_row FROM meter_data_types;")
+    md_types_message = ""
+    meter_data_type_collection = []
+    for row in cursor:
+        md_types_message = md_types_message + row[0].strip() + " " + row[1] + '_' + "\n"
+        meter_data_type_collection.append(row[1])
+    msg = bot.send_message(message.chat.id, "По каким квитанциям "
+                                            "вы хотите вывести статистику"
+                                            " в виде графика?\n " + md_types_message)
+    bot.register_next_step_handler(msg, lambda next_message: proof_meter_data_type(next_message, meter_data_type_collection))
+
+
+def proof_meter_data_type(message, meter_data_type_collection):
+    meter_data_type = message.text
+    try:
+        meter_data_type_collection.index(meter_data_type[0:len(meter_data_type)-1])
+    except ValueError:
+        msg = bot.send_message(message.chat.id, "Что-то пошло не так... попробуйте снова /graphics")
+        return
+    # bot.send_message(message.chat.id, "Ок. Я запомнил. " + meter_data_type)
+    collect_meter_data(message, meter_data_type)
+
+
+def collect_meter_data(message, meter_data_type):
+    cursor.execute("select date, value from meter_data "
+                   "left outer join meter_data_types "
+                   "on meter_data_types.id_mdt=meter_data.id_mdt "
+                   "where id_user=" + str(message.chat.id) + " "
+                   "and md_active_row=\'" + meter_data_type[0:len(meter_data_type)-1] + "\'" + " order by value;")
+    # запрос на получение пары (период, показание)
+    periods = []
+    values = []
+    count_md = 0
+    for row in cursor:
+        periods.append(row[0].strftime("%m.%Y"))
+        values.append(row[1])
+        if count_md == 0:
+            count_md = len(row[1].split(' '))
+        if count_md != 0 and count_md != len(row[1].split(' ')):
+            bot.send_message(message.chat.id, "Показания по данному типу квитанций не однородны. \n"
+                                              "График построить не удалось.")
+    send_graphics(message, meter_data_type, periods, values)
+    print(periods, values)
+
+
+def send_graphics(message, meter_data_type, periods, values):
+    figure = plt.figure()
+    mpl.rcParams['font.fantasy'] = 'Arial', 'Times New Roman', 'Tahoma'
+    fig, ax = plt.subplots()
     # сбор показаний
-    meter_data = ["112.31",
-                  "114.09",
-                  "115.76",
-                  "116.98",
-                  "117.76",
-                  "118.88",
-                  "119.56",
-                  "120.45"]
+    if len(values) < 2:
+        bot.send_message(message.chat.id, "Значений слишком мало для статистики")
 
+    delta_meter_data = ['0']
+    md_type = meter_data_type[0:len(meter_data_type)-1]
 
-    delta_meter_data = []
-    i = len(meter_data) - 1
-    while i:
-        delta_meter_data.append(float(meter_data[i]) - float(meter_data[i - 1]))
-        i -= 1
-
-    plt.title('Simple fill_between')
     plt.grid(True)
-    plt.plot(delta_meter_data, color='red', linewidth=4.0)
-    plt.xlabel('Periods', color='blue')
-    plt.ylabel('Use per day', color='green')
+
+    if md_type == "/md_1":
+        i = 0
+        while i < len(values) - 1:
+            delta_meter_data.append(float(values[i + 1]) - float(values[i]))
+            i += 1
+
+    plt.title('График потребления ГАЗА по месяцам', {'fontname':'Tahoma'})
+    plt.plot(periods, delta_meter_data, label='delta', color='red', linewidth=4.0)
+    plt.xlabel('Периоды', {'fontname':'Arial'}, color='blue',fontweight='bold', fontsize=16)
+    plt.ylabel('Потребление в месяц',  {'fontname':'Arial'}, color='green',fontweight='bold', fontsize=16)
+    plt.legend()
+    plt.tight_layout()
+    fig.canvas.draw()
+    ax.set_xticklabels(periods)
+    labels = [item.get_text() for item in ax.get_xticklabels()]
+    labels[0] = ''
+    ax.set_xticklabels(labels)
 
     plt.savefig('%s.%s' % (str(message.chat.id), 'png'), fmt = 'png')
     graphic = open('%s.%s' % (str(message.chat.id), 'png'), 'rb')
