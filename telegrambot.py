@@ -55,7 +55,7 @@ def show_start_message(message):
                    "/clear_md - удалить все активные напоминания о передаче показаний \n" \
                    "/clever_notification - умные уведомления\n" \
                    "/send_meter_data - сбор показаний для статистики\n" \
-                   "/graphics - график по статистике \n" \
+                   "/graphics - график по статистике\n" \
                    "/description - описание работы бота\n" \
                    "/help - список всех команд\n "
     bot.send_message(message.chat.id, help_message)
@@ -492,12 +492,13 @@ def add_clever_notification(message):
 @bot.message_handler(commands=['send_meter_data'])
 def begin_meter_data(message):
     # вывод списка типов показаний по квитанциям
-    cursor.execute("SELECT md_name, md_active_row FROM meter_data_types;")
-    md_types_message = ""
+    cursor.execute("select id_mdt, md_name, md_active_row "
+                   "from meter_data_types;")
+    md_types_message = ''
     meter_data_type_collection = []
     for row in cursor:
-        md_types_message = md_types_message + row[0].strip() + " " + row[1] + '_' + "\n"
-        meter_data_type_collection.append(row[1])
+        md_types_message = md_types_message + row[1].strip() + " " + row[2] + '_' + "\n"
+        meter_data_type_collection.append(row[2])
     msg = bot.send_message(message.chat.id, "По каким квитанциям вы хотите передать показания:\n " + md_types_message)
     bot.register_next_step_handler(msg, lambda next_message: enter_meter_data(next_message, meter_data_type_collection))
 
