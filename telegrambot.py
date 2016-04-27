@@ -564,14 +564,32 @@ def send_meter_data(message, meter_data_type, meter_data):
         msg = bot.send_message(message.chat.id, "Ошибка в записи периода!\n ")
         enter_meter_data_period_call(message, meter_data_type, meter_data)
         return
-    cursor.execute('Insert into meter_data(id_user, id_mdt, date, value) values(' +
-                   str(message.chat.id) + ', ' +
-                   str(id_mdt) + ', ' +
+    trigger = False
+    cursor.execute("select id_user, id_mdt, date "
+                   "from meter_data "
+                   "where id_user=" + str(message.chat.id) +
+                   " and id_mdt=" + str(id_mdt) +
+                   " and date=" +
                    '\'' + year + '-' + month + '-01' + '\'' + ', ' +
-                   '\'' + meter_data + '\'' + ')'
-                   )
-    connect.commit()
-    bot.send_message(message.chat.id, "Ваши показания приняты\n ")
+                   '\'' + meter_data + '\'')
+    for row in cursor:
+        trigger = True
+    if trigger:
+        cursor.execute('Insert into meter_data(id_user, id_mdt, date, value) values(' +
+                       str(message.chat.id) + ', ' +
+                       str(id_mdt) + ', ' +
+                       '\'' + year + '-' + month + '-01' + '\'' + ', ' +
+                       '\'' + meter_data + '\'' + ')'
+                       )
+        connect.commit()
+        bot.send_message(message.chat.id, "Ваши показания приняты\n ")
+    else:
+        msg = bot.send_message(message.chat.id, "За этот период показание уже есть.\n Заменить?\n")
+        #bot.register_next_step_handler(msg, lambda next_message: add_alive_md(next_message, ))
+
+
+def add_alive_md():
+    pass
 
 
 ########################################################################################################################
