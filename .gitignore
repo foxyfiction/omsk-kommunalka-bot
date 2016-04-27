@@ -2,3 +2,4 @@
 /.git
 /__pycache__
 *.png
+config.py
